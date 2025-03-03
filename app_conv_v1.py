@@ -47,10 +47,9 @@ def process_transcription(file, model, idx):
         audio = whisper.load_audio(temp_file_path)
         if audio.size == 0:
             raise ValueError("The audio file is empty or could not be processed. "
-                             "Please verify the file or ensure FFmpeg is installed.")
+                             "Please ensure the file is valid and FFmpeg is installed.")
 
         with st.spinner(f"Transcribing {file.name}..."):
-            # Transcribe the already-loaded audio array.
             result = model.transcribe(audio)
             transcript = result.get("text", "No transcript generated.")
     except Exception as e:
