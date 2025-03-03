@@ -1,82 +1,46 @@
-import ssl
-import certifi
-import os
-import tempfile
-from datetime import datetime
 import streamlit as st
 import whisper
+import tempfile
+import os
 
-# Set up SSL context using certifi's certificates.
-def get_ssl_context(*args, **kwargs):
-    return ssl.create_default_context(cafile=certifi.where())
+def main():
+    st.title("Whisper Audio Transcription App")
+    st.write("Transcribe your audio files using OpenAI's Whisper model.")
 
-ssl._create_default_https_context = get_ssl_context
+    # Allow user to select a model from the available options
+    model_options = ["tiny", "base", "small", "medium", "large"]
+    model_choice = st.selectbox("Select the Whisper model", options=model_options)
 
-# Cache the model loading so that the model is only loaded once per session.
-@st.cache_resource
-def load_whisper_model(model_name: str):
-    return whisper.load_model(model_name)
-
-st.title("Whisper Audio Transcription App")
-st.write("Select a Whisper model, upload your audio files, and download your transcripts. Simple as that!")
-
-# Allow the user to choose a Whisper model.
-model_options = ["tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large"]
-selected_model = st.selectbox("Select a Whisper Model", model_options)
-
-# Load the selected model.
-model = load_whisper_model(selected_model)
-
-# File uploader for multiple audio files.
-uploaded_files = st.file_uploader("Upload Audio Files", accept_multiple_files=True, type=["mp3", "wav", "m4a", "flac", "ogg"])
-
-if uploaded_files:
-    st.write("### Uploaded Files")
-    for file in uploaded_files:
-        st.write(f"- {file.name}")
-
-def process_transcription(file, model, idx):
-    st.write(f"**Processing file: {file.name}**")
-    # Save the uploaded file to a temporary file.
-    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.name)[1]) as temp_file:
-        temp_file.write(file.getbuffer())
-        temp_file_path = temp_file.name
-
-    try:
-        # Load the audio to verify that it's valid.
-        audio = whisper.load_audio(temp_file_path)
-        if audio.size == 0:
-            raise ValueError("The audio file is empty or could not be processed. "
-                             "Please ensure the file is valid and FFmpeg is installed.")
-
-        with st.spinner(f"Transcribing {file.name}..."):
-            result = model.transcribe(audio)
-            transcript = result.get("text", "No transcript generated.")
-    except Exception as e:
-        transcript = f"Error transcribing file: {e}"
-    finally:
-        os.remove(temp_file_path)
+    # Upload an audio file
+    uploaded_file = st.file_uploader("Upload an audio file", type=["mp3", "wav", "m4a", "mp4", "ogg"])
     
-    return transcript
-
-# Button to start transcription.
-if uploaded_files and st.button("Transcribe Files"):
-    for idx, uploaded_file in enumerate(uploaded_files):
-        transcript = process_transcription(uploaded_file, model, idx)
+    if uploaded_file is not None:
+        # Display the uploaded audio
+        st.audio(uploaded_file)
         
-        # Display the transcript in an expandable section.
-        with st.expander(f"Transcript for {uploaded_file.name}"):
-            st.text_area("Transcript", transcript, height=200, key=f"transcript_{idx}")
+        if st.button("Transcribe"):
+            with st.spinner("Transcribing..."):
+                # Determine file extension for the temporary file
+                suffix = os.path.splitext(uploaded_file.name)[1] if uploaded_file.name else ".wav"
+                # Save the uploaded file to a temporary file so Whisper can process it
+                with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                    tmp.write(uploaded_file.read())
+                    tmp_path = tmp.name
 
-        # Create a unique filename for the transcript.
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        transcript_filename = f"{os.path.splitext(uploaded_file.name)[0]}_transcript_{timestamp}.txt"
-        
-        # Provide a download button.
-        st.download_button(
-            label="Download Transcript",
-            data=transcript,
-            file_name=transcript_filename,
-            mime="text/plain",
-            key=f"download_{idx}"
-        )
+                # Load the selected Whisper model (this may take some time)
+                model = whisper.load_model(model_choice)
+                # Transcribe the audio file
+                result = model.transcribe(tmp_path)
+                transcript = result["text"]
+
+                # Cleanup temporary file
+                os.remove(tmp_path)
+
+            st.success("Transcription complete!")
+            # Display transcript in a text area
+            st.text_area("Transcript", transcript, height=300)
+            # Provide a download button for the transcript
+            st.download_button("Download Transcript", transcript, file_name="transcript.txt")
+
+if __name__ == "__main__":
+    main()
