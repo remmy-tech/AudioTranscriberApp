@@ -8,7 +8,7 @@ def main():
     st.write("Transcribe your audio files using OpenAI's Whisper model.")
 
     # Allow user to select a model from the available options
-    model_options = ["tiny", "base", "small", "medium", "large"]
+    model_options = ["tiny", "tiny.en", "base", "small", "medium", "large"]
     model_choice = st.selectbox("Select the Whisper model", options=model_options)
 
     # Upload an audio file
