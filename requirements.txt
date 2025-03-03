@@ -1,4 +1,4 @@
-streamlit
-git+https://github.com/openai/whisper.git
+streamlit>=1.15
+openai-whisper
+torch
 certifi
-ffmpeg
