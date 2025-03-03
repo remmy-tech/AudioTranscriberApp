@@ -1,6 +1,6 @@
 import ssl
 import certifi
-
+# Set up SSL context to use certifi's certificates.
 def get_ssl_context(*args, **kwargs):
     return ssl.create_default_context(cafile=certifi.where())
 
@@ -12,12 +12,10 @@ from datetime import datetime
 import streamlit as st
 import whisper
 
-# Cache the model loading to speed up subsequent loads.
-@st.cache_resource
 def load_whisper_model(model_name: str):
+    # Directly load the model without caching.
     return whisper.load_model(model_name)
 
-# App title and description.
 st.title("Whisper Audio Transcription App")
 st.write("Upload your audio files, select a Whisper model, and download your transcripts.")
 
