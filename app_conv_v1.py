@@ -17,7 +17,7 @@ def load_whisper_model(model_name: str):
     return whisper.load_model(model_name)
 
 st.title("Whisper Audio Transcription App")
-st.write("Upload your audio files, select a Whisper model, and download your transcripts.")
+st.write("Select a Whisper model, upload your audio files, and download your transcripts. Simple as that!")
 
 # Let the user choose which Whisper model to use.
 model_options = ["tiny", "tiny.en", "base", "base.en", "small", "small.en", "medium", "medium.en", "large"]
