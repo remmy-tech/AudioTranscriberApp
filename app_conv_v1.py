@@ -1,3 +1,11 @@
+import ssl
+import certifi
+
+def get_ssl_context(*args, **kwargs):
+    return ssl.create_default_context(cafile=certifi.where())
+
+ssl._create_default_https_context = get_ssl_context
+
 import os
 import tempfile
 from datetime import datetime
